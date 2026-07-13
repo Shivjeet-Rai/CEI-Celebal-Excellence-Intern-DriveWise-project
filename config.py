@@ -13,12 +13,12 @@ CACHE_DIR = "data/cache"
 VECTORSTORE_DIR = "vectorstore"
 LOG_DIR = "logs"
 
-EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"
+EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
 # Smaller reranker (~22M params instead of ~278M)
 RERANKER_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 
-LLM_MODEL = "gemini-flash-latest"
+LLM_MODEL = "gemini-2.5-flash"
 
 # FAISS Retrieval Settings
 FAISS_TOP_K = 10
