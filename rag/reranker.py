@@ -1,7 +1,8 @@
 """Cross-Encoder Reranking Module.
 
-Reranks retrieved document chunks using local Cross-Encoder models (defaulting to
-BAAI/bge-reranker-base) to prioritize the most relevant facts.
+Reranks retrieved document chunks using a lightweight Cross-Encoder model
+(defaulting to cross-encoder/ms-marco-MiniLM-L-6-v2) to prioritize the
+most relevant brochure sections.
 """
 
 import logging
@@ -19,9 +20,15 @@ class BrochureReranker:
     """Reranks candidates retrieved by HybridRetriever using a Cross-Encoder."""
 
     def __init__(self, model_name: str = config.RERANKER_MODEL) -> None:
-        """Initializes the CrossEncoder model."""
-        logger.info("Loading Cross-Encoder reranker: %s", model_name)
-        self.model = CrossEncoder(model_name)
+        """Stores model name and lazy-loads the CrossEncoder only when needed."""
+        self.model_name = model_name
+        self.model = None
+
+    def _load_model(self) -> None:
+        """Loads the CrossEncoder model only on first use."""
+        if self.model is None:
+            logger.info("Loading Cross-Encoder reranker: %s", self.model_name)
+            self.model = CrossEncoder(self.model_name)
 
     def rerank(
         self,
@@ -39,27 +46,33 @@ class BrochureReranker:
             )
             return retrieved_chunks[:top_n]
 
+        # Lazy-load the model only when actually required
+        self._load_model()
+
         logger.info(
             "Reranking %d chunks using Cross-Encoder", len(retrieved_chunks)
         )
 
-        # Prepare pairs for the Cross-Encoder: (query, text)
+        # Prepare query-document pairs
         pairs = [[query, chunk.text] for chunk in retrieved_chunks]
 
         # Predict relevance scores
         scores = self.model.predict(pairs)
 
-        # Update scores inside chunks
+        # Assign scores
         for chunk, score in zip(retrieved_chunks, scores):
             chunk.score = float(score)
 
-        # Sort chunks by score in descending order
+        # Return top ranked chunks
         reranked_chunks = sorted(
-            retrieved_chunks, key=lambda x: x.score, reverse=True
+            retrieved_chunks,
+            key=lambda x: x.score,
+            reverse=True
         )
 
         logger.info(
             "Reranking complete. Returning top %d chunks",
             min(top_n, len(reranked_chunks))
         )
+
         return reranked_chunks[:top_n]

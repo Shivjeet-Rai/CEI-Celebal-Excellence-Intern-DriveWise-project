@@ -14,7 +14,7 @@ VECTORSTORE_DIR = "vectorstore"
 LOG_DIR = "logs"
 
 EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"
-RERANKER_MODEL = "BAAI/bge-reranker-base"
+RERANKER_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 LLM_MODEL = "gemini-flash-latest"
 
 # Hybrid Retrieval Settings
