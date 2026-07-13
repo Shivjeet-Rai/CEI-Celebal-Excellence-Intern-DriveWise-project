@@ -14,14 +14,15 @@ VECTORSTORE_DIR = "vectorstore"
 LOG_DIR = "logs"
 
 EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"
+
+# Smaller reranker (~22M params instead of ~278M)
 RERANKER_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+
 LLM_MODEL = "gemini-flash-latest"
 
-# Hybrid Retrieval Settings
+# FAISS Retrieval Settings
 FAISS_TOP_K = 10
-BM25_TOP_K = 10
 FINAL_TOP_K = 5
-RRF_K = 60
 
 # Reranking Settings
 TOP_RERANKED_CHUNKS = 8
