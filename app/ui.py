@@ -5,7 +5,6 @@ chat session management, and rendering pipeline responses.
 """
 
 import logging
-import subprocess
 
 import streamlit as st
 
@@ -36,17 +35,6 @@ def main() -> None:
         "Ask technical specification questions directly grounded "
         "in official manufacturer brochures."
     )
-
-    # TEMPORARY DIAGNOSTIC — remove after debugging
-    with st.expander("🔧 Debug Info (temporary)"):
-        try:
-            result = subprocess.run(["pip", "show", "torch"], capture_output=True, text=True)
-            st.code(result.stdout)
-            result2 = subprocess.run(["pip", "list"], capture_output=True, text=True)
-            nvidia_lines = [l for l in result2.stdout.splitlines() if "nvidia" in l.lower()]
-            st.code("\n".join(nvidia_lines) if nvidia_lines else "No nvidia packages found")
-        except Exception as e:
-            st.error(f"Diagnostic failed: {e}")
 
     # Sidebar
     render_sidebar_filters()

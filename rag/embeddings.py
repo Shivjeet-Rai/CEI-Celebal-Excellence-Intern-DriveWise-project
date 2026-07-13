@@ -1,35 +1,25 @@
 """Embeddings Generation Module.
 
-Generates dense vector embeddings for text chunks using local sentence-transformer
-models (defaulting to BAAI/bge-small-en-v1.5).
+Generates dense vector embeddings for text chunks using a quantized ONNX
+model via fastembed (defaulting to sentence-transformers/all-MiniLM-L6-v2).
+No torch dependency — runs on ONNX Runtime for a much smaller memory footprint.
 """
 
-import gc
 import logging
 from typing import List
 
-import torch
-torch.set_num_threads(1)
-
-from sentence_transformers import SentenceTransformer
+from fastembed import TextEmbedding
 
 logger = logging.getLogger(__name__)
 
 
 class EmbeddingGenerator:
-    """Wrapper for sentence-transformers to generate text embeddings."""
+    """Wrapper for fastembed to generate text embeddings."""
 
-    def __init__(self, model_name: str = "BAAI/bge-small-en-v1.5") -> None:
-        """Initializes the SentenceTransformer model."""
+    def __init__(self, model_name: str = "sentence-transformers/all-MiniLM-L6-v2") -> None:
+        """Initializes the fastembed TextEmbedding model (ONNX-backed)."""
         logger.info("Loading embedding model: %s", model_name)
-        self.model = SentenceTransformer(model_name, device="cpu")
-        try:
-            self.model.half()  # fp16 weights, roughly halves resident memory
-        except RuntimeError as e:
-            logger.warning(
-                "fp16 not supported for this op on CPU, falling back to fp32: %s", e
-            )
-        gc.collect()
+        self.model = TextEmbedding(model_name=model_name)
 
     def generate_embeddings(self, texts: List[str]) -> List[List[float]]:
         """Generates normalized vector embeddings for a list of texts."""
@@ -37,10 +27,6 @@ class EmbeddingGenerator:
             return []
 
         logger.info("Generating embeddings for %d text segments", len(texts))
-        # normalize_embeddings=True automatically normalizes outputs
-        embeddings = self.model.encode(
-            texts,
-            normalize_embeddings=True,
-            convert_to_numpy=True
-        )
-        return embeddings.tolist()
+        # fastembed's MiniLM models are already L2-normalized by default
+        embeddings = list(self.model.embed(texts))
+        return [emb.tolist() for emb in embeddings]

@@ -2,17 +2,14 @@
 
 Reranks retrieved document chunks using a lightweight Cross-Encoder model
 (defaulting to cross-encoder/ms-marco-MiniLM-L-6-v2) to prioritize the
-most relevant brochure sections.
+most relevant brochure sections. Runs on fastembed's ONNX-backed
+TextCrossEncoder — no torch dependency.
 """
 
-import gc
 import logging
 from typing import List
 
-import torch
-torch.set_num_threads(1)
-
-from sentence_transformers import CrossEncoder
+from fastembed.rerank.cross_encoder import TextCrossEncoder
 
 import config
 from rag.retriever import RetrievedChunk
@@ -32,14 +29,7 @@ class BrochureReranker:
         """Loads the CrossEncoder model only on first use."""
         if self.model is None:
             logger.info("Loading Cross-Encoder reranker: %s", self.model_name)
-            self.model = CrossEncoder(self.model_name, device="cpu")
-            try:
-                self.model.model.half()  # fp16 weights, roughly halves resident memory
-            except RuntimeError as e:
-                logger.warning(
-                    "fp16 not supported for this op on CPU, falling back to fp32: %s", e
-                )
-            gc.collect()
+            self.model = TextCrossEncoder(model_name=self.model_name)
 
     def rerank(
         self,
@@ -64,11 +54,11 @@ class BrochureReranker:
             "Reranking %d chunks using Cross-Encoder", len(retrieved_chunks)
         )
 
-        # Prepare query-document pairs
-        pairs = [[query, chunk.text] for chunk in retrieved_chunks]
+        # Prepare documents for reranking
+        documents = [chunk.text for chunk in retrieved_chunks]
 
         # Predict relevance scores
-        scores = self.model.predict(pairs)
+        scores = list(self.model.rerank(query, documents))
 
         # Assign scores
         for chunk, score in zip(retrieved_chunks, scores):

@@ -5,25 +5,6 @@ Coordinates UI component loads, config loading, and session states.
 """
 
 import sys
-print("STARTUP DIAGNOSTIC BEGINS", flush=True, file=sys.stderr)
-
-import os
-os.environ["OMP_NUM_THREADS"] = "1"
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
-os.environ["PYTHONUNBUFFERED"] = "1"
-
-import torch
-torch.set_num_threads(1)
-
-import subprocess
-print("=== PIP FREEZE CHECK ===", flush=True)
-result = subprocess.run(["pip", "show", "torch"], capture_output=True, text=True)
-print(result.stdout, flush=True)
-result2 = subprocess.run(["pip", "list"], capture_output=True, text=True)
-for line in result2.stdout.splitlines():
-    if "nvidia" in line.lower() or "torch" in line.lower():
-        print(line, flush=True)
-print("=== END CHECK ===", flush=True)
 
 from dotenv import load_dotenv
 import streamlit as st
