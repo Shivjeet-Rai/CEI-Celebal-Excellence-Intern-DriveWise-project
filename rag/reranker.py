@@ -5,8 +5,12 @@ Reranks retrieved document chunks using a lightweight Cross-Encoder model
 most relevant brochure sections.
 """
 
+import gc
 import logging
 from typing import List
+
+import torch
+torch.set_num_threads(1)
 
 from sentence_transformers import CrossEncoder
 
@@ -28,7 +32,14 @@ class BrochureReranker:
         """Loads the CrossEncoder model only on first use."""
         if self.model is None:
             logger.info("Loading Cross-Encoder reranker: %s", self.model_name)
-            self.model = CrossEncoder(self.model_name)
+            self.model = CrossEncoder(self.model_name, device="cpu")
+            try:
+                self.model.model.half()  # fp16 weights, roughly halves resident memory
+            except RuntimeError as e:
+                logger.warning(
+                    "fp16 not supported for this op on CPU, falling back to fp32: %s", e
+                )
+            gc.collect()
 
     def rerank(
         self,

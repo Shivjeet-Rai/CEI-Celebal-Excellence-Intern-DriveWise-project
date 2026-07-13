@@ -4,6 +4,13 @@ Launches the core Streamlit interface or command-line query assistant.
 Coordinates UI component loads, config loading, and session states.
 """
 
+import os
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
+import torch
+torch.set_num_threads(1)
+
 import sys
 from dotenv import load_dotenv
 import streamlit as st

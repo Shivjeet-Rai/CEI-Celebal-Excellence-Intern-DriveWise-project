@@ -1,4 +1,3 @@
-
 """Streamlit Application View.
 
 Main view orchestrator for the Streamlit UI, coordinating layout,
@@ -15,74 +14,98 @@ from rag.pipeline import BrochureRAGPipeline
 logger = logging.getLogger(__name__)
 
 
+@st.cache_resource
+def get_pipeline() -> BrochureRAGPipeline:
+    """Creates a single shared pipeline instance across all sessions."""
+    return BrochureRAGPipeline()
+
+
 def main() -> None:
     """Main Streamlit application entry point."""
+
     st.set_page_config(
         page_title="DriveWise – Automotive Brochure Assistant",
         page_icon="🚗",
-        layout="wide"
+        layout="wide",
     )
 
-    st.title("DriveWise – Automotive Brochure Assistant")
+    st.title("🚗 DriveWise – Automotive Brochure Assistant")
+
     st.write(
         "Ask technical specification questions directly grounded "
         "in official manufacturer brochures."
     )
 
-    # 1. Render sidebar filters
+    # Sidebar
     render_sidebar_filters()
 
-    # 2. Lazy-initialize pipeline in session state
-    if "pipeline" not in st.session_state:
-        with st.spinner("Initializing models... Please wait."):
-            try:
-                st.session_state.pipeline = BrochureRAGPipeline()
-            except Exception as e:
-                st.error(f"Failed to initialize pipeline: {e}")
-                logger.error("Failed to initialize RAG pipeline: %s", e)
-                return
+    # Shared pipeline instance across all users/sessions
+    try:
+        pipeline = get_pipeline()
+    except Exception as e:
+        st.error(f"Failed to initialize pipeline: {e}")
+        logger.exception("Pipeline initialization failed")
+        return
 
-    # 3. Maintain chat history
+    # Chat history (kept per-session intentionally)
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
-    # Display chat messages from history on app rerun
+    # Display previous messages
     for msg in st.session_state.messages:
         render_chat_message(
             role=msg["role"],
             content=msg["content"],
-            sources=msg.get("sources")
+            sources=msg.get("sources"),
         )
 
-    # React to user input
-    if query := st.chat_input(
+    # User input
+    query = st.chat_input(
         "Ask about vehicle specs, safety features, colors..."
-    ):
-        # Display user message in chat message container
+    )
+
+    if query:
+
         render_chat_message("user", query)
-        # Add user message to chat history
-        st.session_state.messages.append({"role": "user", "content": query})
 
-        # Generate assistant response
+        st.session_state.messages.append(
+            {
+                "role": "user",
+                "content": query,
+            }
+        )
+
         try:
-            with st.spinner("Consulting brochures..."):
-                response = st.session_state.pipeline.ask(query)
-                answer = response.get(
-                    "answer",
-                    "I could not find this information in the provided brochures."
-                )
-                sources = response.get("sources", [])
 
-            # Display assistant response in chat message container
-            render_chat_message("assistant", answer, sources)
-            # Add assistant response to chat history
+            with st.spinner("Searching brochures..."):
+
+                response = pipeline.ask(query)
+
+            answer = response.get(
+                "answer",
+                "I could not find this information in the provided brochures.",
+            )
+
+            sources = response.get("sources", [])
+
+            render_chat_message(
+                "assistant",
+                answer,
+                sources,
+            )
+
             st.session_state.messages.append(
                 {
                     "role": "assistant",
                     "content": answer,
-                    "sources": sources
+                    "sources": sources,
                 }
             )
+
         except Exception as e:
-            logger.error("Error generating answer: %s", e)
-            st.error(f"An error occurred: {e}")
+
+            logger.exception("Error generating answer")
+
+            st.error(
+                f"An error occurred while processing your question:\n\n{e}"
+            )
