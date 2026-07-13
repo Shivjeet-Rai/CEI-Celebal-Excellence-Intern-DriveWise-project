@@ -18,7 +18,7 @@ EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 # Smaller reranker (~22M params instead of ~278M)
 RERANKER_MODEL = "Xenova/ms-marco-MiniLM-L-6-v2"
 
-LLM_MODEL = "gemini-flash-latest"
+LLM_MODEL = "gemini-3.1-flash-lite"
 
 # FAISS Retrieval Settings
 FAISS_TOP_K = 10
