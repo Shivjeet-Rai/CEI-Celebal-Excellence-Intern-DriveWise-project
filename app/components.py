@@ -47,7 +47,10 @@ def render_chat_message(
             st.markdown(content)
     else:
         with st.chat_message("assistant"):
-            st.markdown(content)
+            # Fix literal escape sequences and <br> tags coming from Gemini's
+            # JSON output so Markdown tables and line breaks render correctly.
+            display_content = content.replace("\\n", "\n").replace("<br>", "  \n")
+            st.markdown(display_content, unsafe_allow_html=True)
 
             # Renders clean cited sources underneath assistant responses
             if sources:
