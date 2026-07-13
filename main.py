@@ -11,6 +11,16 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 import torch
 torch.set_num_threads(1)
 
+import subprocess
+print("=== PIP FREEZE CHECK ===")
+result = subprocess.run(["pip", "show", "torch"], capture_output=True, text=True)
+print(result.stdout)
+result2 = subprocess.run(["pip", "list"], capture_output=True, text=True)
+for line in result2.stdout.splitlines():
+    if "nvidia" in line.lower() or "torch" in line.lower():
+        print(line)
+print("=== END CHECK ===")
+
 import sys
 from dotenv import load_dotenv
 import streamlit as st
