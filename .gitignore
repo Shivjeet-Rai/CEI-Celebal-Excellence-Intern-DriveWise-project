@@ -157,4 +157,3 @@ cython_debug/
 logs/
 data/processed/
 data/cache/
-vectorstore/
