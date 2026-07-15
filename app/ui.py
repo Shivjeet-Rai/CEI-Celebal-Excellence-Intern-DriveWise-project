@@ -90,13 +90,16 @@ def main() -> None:
             sources=msg.get("sources"),
         )
 
-    # User input — either from a clicked example button, or typed directly
+    # User input — always render the chat bar so it never disappears,
+    # regardless of whether an example button was just clicked.
+    typed_query = st.chat_input(
+        "Ask about vehicle specs, safety features, colors..."
+    )
+
     if "pending_query" in st.session_state:
         query = st.session_state.pop("pending_query")
     else:
-        query = st.chat_input(
-            "Ask about vehicle specs, safety features, colors..."
-        )
+        query = typed_query
 
     if query:
 
