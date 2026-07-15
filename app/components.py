@@ -9,16 +9,26 @@ from typing import Any, Dict, List
 import streamlit as st
 
 
-def render_sidebar_filters() -> Dict[str, Any]:
+def render_sidebar_filters(available_vehicles: List[tuple] = None) -> Dict[str, Any]:
     """Renders the sidebar with filters for Brand, Model, and Year."""
     st.sidebar.header("Filter Brochures")
 
-    # Selectboxes and inputs (prepared for future filtering logic)
-    brand = st.sidebar.selectbox(
-        "Brand",
-        ["All Brands", "Hyundai", "Kia", "Mahindra", "Toyota"]
-    )
-    model = st.sidebar.text_input("Model", placeholder="e.g. Alcazar, Seltos...")
+    if available_vehicles:
+        brands = sorted(set(v[0] for v in available_vehicles))
+        brand = st.sidebar.selectbox("Brand", ["All Brands"] + brands)
+
+        if brand != "All Brands":
+            models = sorted(set(v[1] for v in available_vehicles if v[0] == brand))
+        else:
+            models = sorted(set(v[1] for v in available_vehicles))
+        model = st.sidebar.selectbox("Model", ["All Models"] + models)
+    else:
+        brand = st.sidebar.selectbox(
+            "Brand",
+            ["All Brands", "Hyundai", "Kia", "Mahindra", "Toyota"]
+        )
+        model = st.sidebar.text_input("Model", placeholder="e.g. Alcazar, Seltos...")
+
     year = st.sidebar.slider("Year", min_value=2020, max_value=2026, value=(2020, 2026))
 
     st.sidebar.markdown("---")
